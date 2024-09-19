@@ -64,26 +64,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </tr>
         </thead>
         <tbody>
-            <?php
-            // Fetch products from the database
-            $result = $conn->query("SELECT * FROM products");
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo "<tr>
-                        <td>{$row['product_name']}</td>
-                        <td>{$row['quantity']}</td>
-                        <td>{$row['price']}</td>
-                        <td>
-                            <a href='edit_product.php?id={$row['id']}' class='btn btn-warning btn-sm'>Edit</a>
-                            <a href='delete_product.php?id={$row['id']}' class='btn btn-danger btn-sm'>Delete</a>
-                        </td>
-                    </tr>";
-                }
-            } else {
-                echo "<tr><td colspan='4'>No products found</td></tr>";
-            }
-            ?>
-        </tbody>
+    <?php
+    // Fetch products from the database
+    $result = $conn->query("SELECT * FROM products");
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            echo "<tr>
+                <td>{$row['product_name']}</td>
+                <td>{$row['quantity']}</td>
+                <td>{$row['price']}</td>
+                <td>
+                    <a href='edit_product.php?id={$row['id']}' class='btn btn-warning btn-sm'>Edit</a>
+                    <a href='delete_product.php?id={$row['id']}' class='btn btn-danger btn-sm' onclick=\"return confirm('Are you sure you want to delete this product?');\">Delete</a>
+                </td>
+            </tr>";
+        }
+    } else {
+        echo "<tr><td colspan='4'>No products found</td></tr>";
+    }
+    ?>
+</tbody>
+
     </table>
 </div>
 
