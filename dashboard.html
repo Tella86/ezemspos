@@ -3,51 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Management System</title>
+    <title>Dynamic Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            min-width: 200px;
+            background-color: #343a40;
+            color: white;
+            padding: 15px;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        table {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Dashboard</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="inventory.php">Inventory</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="clients.php">Clients</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="suppliers.php">Suppliers</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="sales.php">Sales</a>
-                    </li>
-                    <!-- Add more links for each module -->
-                </ul>
-            </div>
-        </div>
-    </nav>
-    <div class="container mt-4">
-        <div class="row">
-            <!-- Dynamic widgets to show system status -->
-            <div class="col-md-3">
-                <div class="card text-white bg-primary mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Inventory Status</h5>
-                        <p class="card-text">Total Products: 300</p>
-                    </div>
-                </div>
-            </div>
-            <!-- More cards for metrics -->
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>Dashboard</h2>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="#home" onclick="loadHome()">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#suppliers" onclick="loadSuppliers()">Suppliers</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#clients" onclick="loadClients()">Clients</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#sales" onclick="loadSales()">Sales</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#purchases" onclick="loadPurchases()">Purchases</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#ledger" onclick="loadLedger()">Ledger</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#reports" onclick="loadReports()">Reports</a>
+        </li>
+    </ul>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <h2>Welcome to the Dashboard</h2>
+    <p>Select an option from the sidebar to view details.</p>
+
+    <!-- Dynamic Table -->
+    <div id="table-container">
+        <h3 id="section-title">Data Overview</h3>
+        <table class="table table-striped" id="dynamic-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Dynamic Rows Will Be Injected Here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Function to load data into the table
+    function loadTable(url) {
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('table-body');
+                tableBody.innerHTML = ''; // Clear previous rows
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.email}</td>
+                        <td>${item.phone}</td>
+                        <td>
+                            <a href='php/edit_${item.type}.php?id=${item.id}' class='btn btn-warning btn-sm'>Edit</a>
+                            <a href='php/delete_${item.type}.php?id=${item.id}' class='btn btn-danger btn-sm' onclick="return confirm('Are you sure you want to delete this entry?');">Delete</a>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error loading data:', error));
+    }
+
+    function loadSuppliers() {
+        document.getElementById('section-title').textContent = 'Suppliers';
+        loadTable('php/get_suppliers.php'); // PHP file to fetch suppliers
+    }
+
+    function loadClients() {
+        document.getElementById('section-title').textContent = 'Clients';
+        loadTable('php/get_clients.php'); // PHP file to fetch clients
+    }
+
+    function loadSales() {
+        document.getElementById('section-title').textContent = 'Sales';
+        loadTable('php/get_sales.php'); // PHP file to fetch sales
+    }
+
+    function loadPurchases() {
+        document.getElementById('section-title').textContent = 'Purchases';
+        loadTable('php/get_purchases.php'); // PHP file to fetch purchases
+    }
+
+    function loadLedger() {
+        document.getElementById('section-title').textContent = 'Ledger';
+        loadTable('php/get_ledger.php'); // PHP file to fetch ledger entries
+    }
+
+    function loadReports() {
+        document.getElementById('section-title').textContent = 'Reports';
+        loadTable('php/get_reports.php'); // PHP file to fetch reports
+    }
+
+    // Load home section initially
+    loadTable('php/get_home_data.php'); // PHP file to fetch home data
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

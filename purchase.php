@@ -18,10 +18,80 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sql = "INSERT INTO purchases (supplier_id, product_id, quantity, purchase_date, total_cost) VALUES ('$supplier_id', '$product_id', '$quantity', '$purchase_date', '$total_cost')";
 
     if ($conn->query($sql) === TRUE) {
-        echo "New purchase added successfully!";
+        // Initiate M-Pesa payment after successful insertion
+        $response = initiateMPesaPayment($total_cost, 'Purchase from Supplier ID: '.$supplier_id);
+        if ($response) {
+            echo "Payment initiated. Check your phone for the payment link.";
+        } else {
+            echo "Failed to initiate payment.";
+        }
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
+}
+
+function initiateMPesaPayment($amount, $reference) {
+    // M-Pesa API endpoint and credentials
+    $url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
+    $shortcode = 'Your_Lipa_Na_Mpesa_Shortcode';
+    $lipa_na_mpesa_online_key = 'Your_Consumer_Key';
+    $lipa_na_mpesa_online_secret = 'Your_Consumer_Secret';
+
+    // Generate access token
+    $token = getAccessToken($lipa_na_mpesa_online_key, $lipa_na_mpesa_online_secret);
+
+    // Set headers
+    $headers = [
+        'Authorization: Bearer ' . $token,
+        'Content-Type: application/json'
+    ];
+
+    // Prepare the request payload
+    $payload = json_encode([
+        'BusinessShortCode' => $shortcode,
+        'Password' => base64_encode($shortcode . $lipa_na_mpesa_online_key . time()),
+        'Timestamp' => time(),
+        'TransactionType' => 'CustomerPayBillOnline',
+        'Amount' => $amount,
+        'PartyA' => 'Your_Phone_Number', // Buyer phone number
+        'PartyB' => $shortcode,
+        'PhoneNumber' => 'Your_Phone_Number', // Buyer phone number
+        'CallBackURL' => 'https://yourcallbackurl.com/callback', // Change to your callback URL
+        'AccountReference' => $reference,
+        'TransactionDesc' => 'Payment for purchase'
+    ]);
+
+    // Initialize cURL
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    
+    // Execute cURL request
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($result, true);
+}
+
+function getAccessToken($key, $secret) {
+    $url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
+    $credentials = base64_encode($key . ':' . $secret);
+
+    $headers = [
+        'Authorization: Basic ' . $credentials
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    $response = json_decode($result, true);
+    return $response['access_token'];
 }
 ?>
 

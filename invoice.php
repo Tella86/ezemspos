@@ -2,37 +2,49 @@
 // Include database connection
 include 'db_connect.php';
 
+// Generate a unique invoice number (based on timestamp)
+function generateInvoiceNumber() {
+    return 'INV-' . date('YmdHis'); // Format: INV-YYYYMMDDHHMMSS
+}
+
 // Handle form submission for adding a new invoice
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $client_id = $_POST['client_id'];
-    $invoice_date = $_POST['invoice_date'];
+    $invoice_date = date('Y-m-d'); // Automatically set the current date
+    $invoice_number = generateInvoiceNumber(); // Auto-generated invoice number
     $total_amount = 0;
 
     // Insert the invoice into the database
-    $sql = "INSERT INTO invoices (client_id, invoice_date, total_amount) VALUES ('$client_id', '$invoice_date', '$total_amount')";
+    $sql = "INSERT INTO invoices (client_id, invoice_date, invoice_number, total_amount) VALUES ('$client_id', '$invoice_date', '$invoice_number', '$total_amount')";
     if ($conn->query($sql) === TRUE) {
         $invoice_id = $conn->insert_id;
 
-        // Add invoice items
+        // Add invoice items based on form data
         foreach ($_POST['products'] as $product_id => $details) {
-            $quantity = $details['quantity'];
-            $price = $details['price'];
-            $total = $quantity * $price;
+            // Ensure quantity and price are numeric before multiplying
+            $quantity = (int) $details['quantity'];  // Convert to integer
+            $price = (float) $details['price'];  // Convert to float
+            $total = $quantity * $price;  // Perform multiplication as numeric types
             $total_amount += $total;
 
             // Insert each item into the invoice_items table
             $conn->query("INSERT INTO invoice_items (invoice_id, product_id, quantity, price) VALUES ('$invoice_id', '$product_id', '$quantity', '$price')");
         }
 
-        // Update the total amount for the invoice
-        $conn->query("UPDATE invoices SET total_amount = '$total_amount' WHERE id = '$invoice_id'");
+        // Calculate VAT (16%) and grand total
+        $vat = 0.16 * $total_amount;
+        $grand_total = $total_amount + $vat;
 
-        echo "Invoice created successfully!";
+        // Update the total amount and VAT for the invoice
+        $conn->query("UPDATE invoices SET total_amount = '$grand_total', vat = '$vat' WHERE id = '$invoice_id'");
+
+        echo "Invoice created successfully with Invoice Number: $invoice_number, Total: KES $grand_total (including VAT of KES $vat)!";
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -62,9 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ?>
             </select>
         </div>
+
         <div class="mb-3">
             <label for="invoiceDate" class="form-label">Invoice Date</label>
-            <input type="date" class="form-control" id="invoiceDate" name="invoice_date" required>
+            <input type="date" class="form-control" id="invoiceDate" name="invoice_date" value="<?php echo date('Y-m-d'); ?>" readonly>
         </div>
 
         <h4>Invoice Items</h4>
@@ -128,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     echo "<tr>
                         <td>{$invoice['client_name']}</td>
                         <td>{$invoice['invoice_date']}</td>
-                        <td>\${$invoice['total_amount']}</td>
+                        <td>KES {$invoice['total_amount']}</td>
                         <td>
                             <a href='edit_invoice.php?id={$invoice['id']}' class='btn btn-warning btn-sm'>Edit</a>
                             <a href='delete_invoice.php?id={$invoice['id']}' class='btn btn-danger btn-sm' onclick=\"return confirm('Are you sure you want to delete this invoice?');\">Delete</a>
