@@ -1,0 +1,6 @@
+/* Example of media queries for responsiveness */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.5rem;
+    }
+}
