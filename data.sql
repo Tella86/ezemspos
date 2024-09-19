@@ -53,6 +53,14 @@ CREATE TABLE ledger (
     date DATE NOT NULL,
     description VARCHAR(255) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
-    type ENUM('income', 'expense') NOT NULL,
+    type ENUM('Credit', 'Debit', 'income', 'expense') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_name VARCHAR(255) NOT NULL,
+    account_type ENUM('Savings', 'Current', 'Credit', 'Loan') NOT NULL,
+    balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
